@@ -12,6 +12,8 @@ type Game struct {
 }
 
 func (g *Game) Update() error {
+	g.chip8.DecrementDelayTimer()
+	g.chip8.DecrementSoundTimer()
 	g.chip8.DoCPUStep()
 	return nil
 }

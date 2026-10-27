@@ -3,6 +3,7 @@ package chip8
 import (
 	"errors"
 	"fmt"
+	"math/rand/v2"
 	"os"
 	"path/filepath"
 )
@@ -163,21 +164,65 @@ func (c *CHIP8) ExecuteInstruction() {
 				}
 			case 4:
 				{
+					flag := byte(0)
+					if int(c.R[X])+int(c.R[Y]) > 255 {
+						flag = 1
+					}
 					c.R[X] = c.R[X] + c.R[Y]
+					c.R[0xF] = flag
 				}
 			case 5:
 				{
+					flag := byte(0)
+					if c.R[X] >= c.R[Y] {
+						flag = 1
+					}
 					c.R[X] = c.R[X] - c.R[Y]
+
+					c.R[0xF] = flag
 				}
 			case 7:
 				{
-					c.R[X] = c.R[Y] ^ c.R[X]
+					flag := byte(0)
+					if c.R[Y] >= c.R[X] {
+						flag = 1
+					}
+					c.R[X] = c.R[Y] - c.R[X]
+					c.R[0xF] = flag
+				}
+			case 6:
+				{
+					c.R[X] = c.R[Y]
+					bit_out := c.R[X] & 1
+					c.R[X] = c.R[X] >> 1
+					c.R[0xF] = byte(bit_out)
+				}
+			case 0xE:
+				{
+					c.R[X] = c.R[Y]
+					bit_out := 0
+
+					if c.R[X]&(1<<7) != 0 {
+						bit_out = 1
+					}
+
+					c.R[X] = c.R[X] << 1
+					c.R[0xF] = byte(bit_out)
 				}
 			}
 		}
 	case 0xA:
 		{
 			c.I = NNN
+		}
+
+	case 0xB:
+		{
+			c.PC = NNN + uint16(c.R[0])
+		}
+	case 0xC:
+		{
+			c.R[X] = byte(rand.IntN(256)) & NN
 		}
 	case 0xD:
 		{
@@ -223,9 +268,65 @@ func (c *CHIP8) ExecuteInstruction() {
 			}
 
 		}
+	case 0xF:
+		{
+			switch NN {
+			case 0x7:
+				{
+					c.R[X] = c.DelayTimer
+				}
+			case 0x15:
+				{
+					c.DelayTimer = c.R[X]
+				}
+			case 0x18:
+				{
+					c.SoundTimer = c.R[X]
+				}
+			case 0x1E:
+				{
+					c.I += uint16(c.R[X])
+				}
+			case 0x33:
+				{
+					num := c.R[X]
+					digits := []uint8{}
+
+					for num > 0 {
+						digit := num % 10
+						digits = append(digits, digit)
+						num = num / 10
+					}
+
+					for len(digits) < 3 {
+						digits = append(digits, 0)
+					}
+
+					c.Memory[c.I] = digits[2]
+					c.Memory[c.I+1] = digits[1]
+					c.Memory[c.I+2] = digits[0]
+				}
+			case 0x55:
+				{
+					i := uint8(0)
+					for i <= X {
+						c.Memory[c.I+uint16(i)] = c.R[i]
+						i++
+					}
+				}
+			case 0x65:
+				{
+					i := uint8(0)
+					for i <= X {
+						c.R[i] = c.Memory[c.I+uint16(i)]
+						i++
+					}
+				}
+			}
+		}
 	}
 
-	alreadyIncrementedPC := O == 1 || O == 2 || (O == 0 && X == 0 && NN == 0xEE)
+	alreadyIncrementedPC := O == 1 || O == 2 || (O == 0 && X == 0 && NN == 0xEE) || O == 0xB
 
 	if !alreadyIncrementedPC {
 		c.PCStep()
@@ -238,13 +339,25 @@ func (c *CHIP8) DoCPUStep() {
 }
 
 func (c *CHIP8) Init() {
-	c.DelayTimer = 0xFF
-	c.SoundTimer = 0xFF
+	c.DelayTimer = 0
+	c.SoundTimer = 0
 	c.PC = 0x200
 	// c.Display[10][10] = true
 
 	c.LoadFont()
 	// c.LoadROM("1-chip8-logo.ch8")
-	c.LoadROM("2-ibm-logo.ch8")
-	// c.LoadROM("test_opcode.ch8")
+	// c.LoadROM("2-ibm-logo.ch8")
+	c.LoadROM("test_opcode.ch8")
+}
+
+func (c *CHIP8) DecrementDelayTimer() {
+	if c.DelayTimer > 0 {
+		c.DelayTimer--
+	}
+}
+
+func (c *CHIP8) DecrementSoundTimer() {
+	if c.SoundTimer > 0 {
+		c.SoundTimer--
+	}
 }
