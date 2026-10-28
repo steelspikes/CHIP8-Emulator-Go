@@ -17,6 +17,11 @@ type CHIP8 struct {
 	DelayTimer uint8
 	SoundTimer uint8
 	R          [16]byte
+
+	Keys [16]bool
+
+	WaitingKey     bool
+	LastKeyPressed int
 }
 
 func (c *CHIP8) AddToStack(v uint16) {
@@ -229,16 +234,12 @@ func (c *CHIP8) ExecuteInstruction() {
 			vX := c.R[X] & 63
 			vY := c.R[Y] & 31
 
-			fmt.Println(vX, vY)
-
 			c.R[0xF] = 0
 
 			n := uint8(0)
 			for n < N {
 				sprite_index := c.I + uint16(n)
 				sprite := c.Memory[sprite_index]
-
-				fmt.Println(sprite)
 
 				i := uint8(0)
 				for i < 8 {
@@ -267,6 +268,24 @@ func (c *CHIP8) ExecuteInstruction() {
 				n++
 			}
 
+		}
+
+	case 0xE:
+		{
+			switch NN {
+			case 0x9E:
+				{
+					if c.Keys[c.R[X]&0xF] { // Mascara para ignorar los bits superiores pq Keys es de 4 bits
+						c.PCStep() // Es un PC Step adicional pq tenemos que saltar la instruccion siguiente
+					}
+				}
+			case 0xA1:
+				{
+					if !c.Keys[c.R[X]&0xF] {
+						c.PCStep()
+					}
+				}
+			}
 		}
 	case 0xF:
 		{
@@ -322,6 +341,18 @@ func (c *CHIP8) ExecuteInstruction() {
 						i++
 					}
 				}
+
+			case 0x0A:
+				{
+					if c.LastKeyPressed == -1 {
+						c.PC -= 2
+						c.WaitingKey = true
+					} else {
+						c.R[X] = uint8(c.LastKeyPressed)
+						c.LastKeyPressed = -1
+						c.WaitingKey = false
+					}
+				}
 			}
 		}
 	}
@@ -342,6 +373,7 @@ func (c *CHIP8) Init() {
 	c.DelayTimer = 0
 	c.SoundTimer = 0
 	c.PC = 0x200
+	c.LastKeyPressed = -1
 	// c.Display[10][10] = true
 
 	c.LoadFont()

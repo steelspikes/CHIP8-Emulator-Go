@@ -2,6 +2,7 @@ package main
 
 import (
 	chip8 "chip8_emulator/chip_8"
+	"fmt"
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -11,7 +12,30 @@ type Game struct {
 	chip8 chip8.CHIP8
 }
 
+func (g *Game) ComputeKeysState() {
+	KEYS_LIB := []ebiten.Key{
+		ebiten.Key1, ebiten.Key2, ebiten.Key3, ebiten.Key4,
+		ebiten.KeyQ, ebiten.KeyW, ebiten.KeyE, ebiten.KeyR,
+		ebiten.KeyA, ebiten.KeyS, ebiten.KeyD, ebiten.KeyF,
+		ebiten.KeyZ, ebiten.KeyX, ebiten.KeyC, ebiten.KeyV,
+	}
+
+	for i, k := range KEYS_LIB {
+		state := ebiten.IsKeyPressed(k)
+
+		if g.chip8.WaitingKey && g.chip8.Keys[i] != state {
+			fmt.Println("Pressed")
+			g.chip8.LastKeyPressed = i
+		}
+
+		g.chip8.Keys[i] = state
+	}
+}
+
 func (g *Game) Update() error {
+	g.ComputeKeysState()
+	// fmt.Println(g.chip8.Keys)
+
 	g.chip8.DecrementDelayTimer()
 	g.chip8.DecrementSoundTimer()
 	g.chip8.DoCPUStep()
