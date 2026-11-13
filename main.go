@@ -33,12 +33,16 @@ func (g *Game) ComputeKeysState() {
 }
 
 func (g *Game) Update() error {
-	g.ComputeKeysState()
-	// fmt.Println(g.chip8.Keys)
-
+	i := 0
+	for i < 10 {
+		g.ComputeKeysState()
+		// fmt.Println(g.chip8.Keys)
+		g.chip8.DoCPUStep()
+		i++
+	}
 	g.chip8.DecrementDelayTimer()
 	g.chip8.DecrementSoundTimer()
-	g.chip8.DoCPUStep()
+
 	return nil
 }
 

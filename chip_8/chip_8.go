@@ -306,6 +306,10 @@ func (c *CHIP8) ExecuteInstruction() {
 				{
 					c.I += uint16(c.R[X])
 				}
+			case 0x29:
+				{
+					c.I = 0x050 + 5*uint16(c.R[X]&0b00001111)
+				}
 			case 0x33:
 				{
 					num := c.R[X]
@@ -379,7 +383,9 @@ func (c *CHIP8) Init() {
 	c.LoadFont()
 	// c.LoadROM("1-chip8-logo.ch8")
 	// c.LoadROM("2-ibm-logo.ch8")
-	c.LoadROM("test_opcode.ch8")
+	// c.LoadROM("test_opcode.ch8")
+	// c.LoadROM("6-keypad.ch8")
+	c.LoadROM("Pong.ch8")
 }
 
 func (c *CHIP8) DecrementDelayTimer() {
