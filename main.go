@@ -2,6 +2,7 @@ package main
 
 import (
 	chip8 "chip8_emulator/chip_8"
+	"chip8_emulator/translators"
 	"fmt"
 	"image/color"
 
@@ -62,7 +63,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 	return 64, 32 // Leer del CHIP
 }
 
-func main() {
+func RunEmulator() {
 	ebiten.SetWindowSize(640, 480)
 	ebiten.SetWindowTitle("Title")
 
@@ -72,6 +73,11 @@ func main() {
 	if err := ebiten.RunGame(game); err != nil {
 		panic(err)
 	}
+}
+
+func main() {
+	// RunEmulator()
+	translators.Disassemble("Pong.ch8")
 
 	// chip := chip8.CHIP8{}
 	// chip.Init()

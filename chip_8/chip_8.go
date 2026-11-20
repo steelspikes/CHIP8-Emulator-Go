@@ -1,11 +1,10 @@
 package chip8
 
 import (
+	"chip8_emulator/utils"
 	"errors"
 	"fmt"
 	"math/rand/v2"
-	"os"
-	"path/filepath"
 )
 
 type CHIP8 struct {
@@ -44,12 +43,8 @@ func (c *CHIP8) PCStep() {
 	c.PC += 2
 }
 
-func ReadFile(name string) ([]byte, error) {
-	return os.ReadFile(filepath.Join("bin", name))
-}
-
 func (c *CHIP8) LoadROM(name string) {
-	data, err := ReadFile(name)
+	data, err := utils.ReadFile(name)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -61,7 +56,7 @@ func (c *CHIP8) LoadROM(name string) {
 }
 
 func (c *CHIP8) LoadFont() {
-	data, err := ReadFile("font.bin")
+	data, err := utils.ReadFile("font.bin")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -73,16 +68,7 @@ func (c *CHIP8) LoadFont() {
 func (c *CHIP8) DecodeCurrentInstruction() (uint8, uint8, uint8, uint8, uint8, uint16) {
 	i1 := c.Memory[c.PC]
 	i2 := c.Memory[c.PC+1]
-
-	O := i1 >> 4 // Recorrer 4 bits para mantener los 4 bits altos
-	X := i1 & 0b00001111
-	Y := i2 >> 4
-	N := i2 & 0b00001111
-	NN := i2
-	NNN := uint16(X) << 8
-	NNN = NNN | uint16(i2)
-
-	return O, X, Y, N, NN, NNN
+	return utils.DecodeInstruction(i1, i2)
 }
 
 func (c *CHIP8) ClearScreen() {
